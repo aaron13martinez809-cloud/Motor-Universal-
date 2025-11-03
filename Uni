@@ -1,0 +1,204 @@
+<!DOCTYPE html><html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Quiz: Motor universal</title>
+  <meta name="description" content="Cuestionario de 10 preguntas de opción múltiple sobre motor universal. Un intento. Apruebas con 6." />
+  <style>
+    :root{ --bg:#0f172a; --panel:#111827; --text:#e5e7eb; --muted:#94a3b8; --brand:#38bdf8; --border:#1f2937; --ring: rgba(56,189,248,.45); }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{margin:0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Helvetica Neue, Arial; color:var(--text); background:radial-gradient(1200px 800px at 80% -10%, #1e293b 0%, #0b1220 40%, var(--bg) 80%), var(--bg); line-height:1.5}
+    .container{max-width:900px; margin:0 auto; padding:0 1.2rem}
+    header{padding:22px 0; border-bottom:1px solid var(--border); background:rgba(10,15,25,.5); position:sticky; top:0; backdrop-filter: blur(8px)}
+    h1{font-size:clamp(1.6rem,3.6vw,2.4rem); margin:.2rem 0}
+    p.muted{color:var(--muted)}
+    .card{background:#0b1220; border:1px solid var(--border); border-radius:16px; padding:1rem; box-shadow: 0 10px 30px rgba(0,0,0,.25)}
+    .grid{display:grid; gap:1rem}
+    .btn{display:inline-flex; align-items:center; gap:.5rem; padding:.7rem 1rem; border-radius:.8rem; border:1px solid var(--border); background:#0b1220; color:var(--text); cursor:pointer}
+    .btn.primary{background:linear-gradient(135deg,#0284c7,var(--brand)); color:#06121f; font-weight:700; border-color:transparent}
+    .btn:disabled{opacity:.5; cursor:not-allowed}
+    .question{padding:1rem; border:1px dashed var(--border); border-radius:12px}
+    .q-title{font-weight:700; margin-bottom:.5rem}
+    .options{display:grid; gap:.4rem; margin-top:.5rem}
+    label.option{display:flex; gap:.6rem; align-items:flex-start; padding:.6rem .7rem; border:1px solid var(--border); border-radius:10px; cursor:pointer}
+    input[type="radio"]{accent-color:#38bdf8}
+    .result{margin-top:1rem; padding:1rem; border-radius:12px; border:1px solid var(--border)}
+    .result.pass{background:#0f2a19; border-color:#14532d}
+    .result.fail{background:#2a0f14; border-color:#7f1d1d}
+    .toolbar{display:flex; gap:.6rem; flex-wrap:wrap; align-items:center}
+    .kbd{border:1px solid var(--border); border-bottom-width:3px; background:#0b1220; padding:.1rem .4rem; border-radius:6px; font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; font-size:.85rem}
+    .footer{padding:32px 0; color:var(--muted); border-top:1px solid var(--border); margin-top:28px}
+    .small{font-size:.9rem; color:var(--muted)}
+    form.inline{display:flex; gap:.6rem; flex-wrap:wrap; align-items:end}
+    input[type="text"], input[type="email"] {width:100%; padding:.8rem 1rem; border-radius:10px; border:1px solid var(--border); background:#0b1220; color:var(--text)}
+    input:focus{outline:2px solid var(--ring); border-color:transparent}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container">
+      <h1>Quiz: Motor universal</h1>
+      <p class="muted">10 preguntas. Un intento por persona. Cada correcta vale 1 punto. Apruebas con <strong>6</strong> o más.</p>
+      <div class="toolbar">
+        <form id="startForm" class="inline" onsubmit="startQuiz(event)">
+          <div style="flex:1 1 260px">
+            <label for="fullname" class="small">Nombre y apellido</label>
+            <input id="fullname" name="fullname" type="text" placeholder="Ej: Ana Pérez" required />
+          </div>
+          <button id="startBtn" class="btn primary" type="submit">Comenzar</button>
+          <button id="resetBtn" class="btn" type="button" onclick="resetQuiz()" disabled>Reiniciar</button>
+        </form>
+      </div>
+      <p id="attemptNotice" class="small" style="display:none"></p>
+    </div>
+  </header>  <main class="container" style="padding:22px 0 40px">
+    <section id="quizSection" class="grid"></section>
+    <section id="summary" style="display:none">
+      <div id="resultBox" class="result"></div>
+      <div id="mailRow" style="margin-top:.8rem"></div>
+      <p class="small">Consejo: publica esta página (GitHub Pages, Netlify o Vercel) y genera un código QR con la URL publicada para que accedan con el celular.</p>
+    </section>
+  </main>  <footer class="footer">
+    <div class="container">
+      <small>© <span id="year"></span> Quiz</small>
+    </div>
+  </footer>  <script>
+    document.getElementById('year').textContent = new Date().getFullYear();
+
+    // === Configura las preguntas (editables) ===
+    // Índices correctos basados en 0..3
+    const QUESTIONS = [
+      { q: '¿Qué tipo de corriente puede utilizar un motor universal?', options: ['Solo corriente alterna','Solo corriente continua','Corriente alterna y continua','Ninguna de las anteriores'], correct: 2 },
+      { q: '¿Cuál es la parte fija del motor universal?', options: ['Rotor','Estátor','Escobillas','Conmutador'], correct: 1 },
+      { q: '¿Qué función cumple el conmutador en el motor universal?', options: ['Generar el campo magnético','Sostener las escobillas','Invertir la corriente en las bobinas del rotor','Reducir el ruido'], correct: 2 },
+      { q: '¿Qué material suelen tener las escobillas?', options: ['Cobre','Hierro','Grafito','Aluminio'], correct: 2 },
+      { q: '¿Qué principio físico explica el movimiento del motor universal?', options: ['Ley de Ohm','Fuerza de Lorentz','Ley de Faraday','Principio de Pascal'], correct: 1 },
+      { q: '¿Cuál de las siguientes es una ventaja del motor universal?', options: ['No necesita mantenimiento','Solo funciona con corriente continua','Alto par de arranque','No produce ruido'], correct: 2 },
+      { q: '¿Cuál es una desventaja del motor universal?', options: ['No tiene escobillas','Genera ruido y chispas','No puede alcanzar altas velocidades','No puede arrancar con carga'], correct: 1 },
+      { q: '¿En qué tipo de aparato se usa comúnmente un motor universal?', options: ['Refrigeradores','Taladros','Lámparas','Ventiladores de techo'], correct: 1 },
+      { q: '¿Por qué el motor universal es considerado versátil?', options: ['Porque es muy barato','Porque puede girar en ambos sentidos','Porque funciona con CA y CC','Porque no tiene partes móviles'], correct: 2 },
+      { q: '¿Qué pasa si el motor universal funciona sin carga?', options: ['Se apaga automáticamente','Disminuye su velocidad','Puede aumentar peligrosamente su velocidad','No ocurre nada'], correct: 2 },
+    ];
+
+    const PASS_SCORE = 6; // mínimo para aprobar
+    const EMAIL_TO = 'aaron13martinez809@gmail.com'; // destino de resultados
+    const STORAGE_KEY = 'quiz_motor_universal_attempt_v1';
+
+    const quizSection = document.getElementById('quizSection');
+    const summary = document.getElementById('summary');
+    const resultBox = document.getElementById('resultBox');
+    const startForm = document.getElementById('startForm');
+    const startBtn = document.getElementById('startBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const attemptNotice = document.getElementById('attemptNotice');
+
+    // Bloqueo por un solo intento usando localStorage
+    const prev = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');
+    if(prev && prev.tried){
+      startBtn.disabled = true; resetBtn.disabled = true;
+      attemptNotice.style.display = 'block';
+      attemptNotice.textContent = `Este dispositivo ya realizó el intento el ${new Date(prev.when).toLocaleString()}. Resultado: ${prev.name} — ${prev.score}/${QUESTIONS.length} (${prev.passed ? 'aprobado' : 'no aprobado'}).`;
+    }
+
+    function startQuiz(e){
+      e.preventDefault();
+      const fullname = (document.getElementById('fullname').value || '').trim();
+      if(!fullname) return;
+      renderQuiz(fullname);
+    }
+
+    function renderQuiz(fullname){
+      quizSection.innerHTML = '';
+      summary.style.display = 'none';
+      QUESTIONS.forEach((item, idx)=>{
+        const card = document.createElement('article');
+        card.className = 'question';
+        card.innerHTML = `
+          <div class="q-title">${idx+1}. ${escapeHtml(item.q)}</div>
+          <div class="options">
+            ${item.options.map((opt, oi)=>`
+              <label class="option">
+                <input type="radio" name="q${idx}" value="${oi}" required />
+                <span>${escapeHtml(opt)}</span>
+              </label>
+            `).join('')}
+          </div>
+        `;
+        quizSection.appendChild(card);
+      });
+      const submit = document.createElement('button');
+      submit.textContent = 'Enviar respuestas';
+      submit.className = 'btn primary';
+      submit.style.marginTop = '10px';
+      submit.addEventListener('click', ()=> grade(fullname));
+      quizSection.appendChild(submit);
+      startBtn.disabled = true; resetBtn.disabled = false;
+    }
+
+    function grade(fullname){
+      const answers = [];
+      for(let i=0;i<QUESTIONS.length;i++){
+        const sel = document.querySelector(`input[name="q${i}"]:checked`);
+        if(!sel){ alert(`Te falta responder la pregunta ${i+1}`); return; }
+        answers.push(Number(sel.value));
+      }
+      let score = 0; answers.forEach((ans, i)=>{ if(ans === QUESTIONS[i].correct) score++; });
+      const passed = score >= PASS_SCORE;
+
+      // Guardar intento (bloquea nuevos intentos en este dispositivo/navegador)
+      const record = { tried:true, when: Date.now(), name: fullname, score, passed };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(record));
+
+      resultBox.className = 'result ' + (passed ? 'pass' : 'fail');
+      resultBox.innerHTML = `
+        <strong>${escapeHtml(fullname)}</strong><br>
+        Puntaje: <strong>${score} / ${QUESTIONS.length}</strong><br>
+        ${passed ? '✅ ¡Aprobaste!' : '❌ No alcanzaste el mínimo. Vuelve a intentarlo en otro momento.'}
+      `;
+      summary.style.display = 'block';
+
+      // Deshabilitar inputs tras calificar
+      document.querySelectorAll('input[type="radio"]').forEach(r=>r.disabled = true);
+
+      // Preparar botón para enviar resultados por email (usar cliente de correo)
+      const ts = new Date().toLocaleString();
+      const subject = encodeURIComponent(`Resultado quiz — Motor universal (${fullname})`);
+      const body = encodeURIComponent([
+        `Nombre: ${fullname}`,
+        `Fecha y hora: ${ts}`,
+        `Puntaje: ${score}/${QUESTIONS.length} (${passed ? 'APROBADO' : 'NO APROBADO'})`,
+        '',
+        'Detalle de respuestas:',
+        ...QUESTIONS.map((q, i)=>` ${i+1}) ${q.q}
+ - Correcta: ${q.options[q.correct]}`)
+      ].join('
+'));
+      const mailto = `mailto:${EMAIL_TO}?subject=${subject}&body=${body}`;
+      const mailRow = document.getElementById('mailRow');
+      mailRow.innerHTML = '';
+      const mailBtn = document.createElement('a');
+      mailBtn.href = mailto; mailBtn.className = 'btn'; mailBtn.textContent = 'Enviar resultado por email';
+      mailRow.appendChild(mailBtn);
+
+      // Desactivar reinicio para mantener el concepto de un intento; puedes habilitar si quieres permitir ver las preguntas luego
+      resetBtn.disabled = true;
+    }
+
+    function resetQuiz(){
+      // Permite limpiar antes de comenzar (no borra el intento una vez enviado)
+      quizSection.innerHTML = '';
+      summary.style.display = 'none';
+      startBtn.disabled = false; // habilita volver a empezar si aún no enviaste
+    }
+
+    function escapeHtml(str){
+      return String(str)
+        .replaceAll('&','&amp;')
+        .replaceAll('<','&lt;')
+        .replaceAll('>','&gt;')
+        .replaceAll('"','&quot;')
+        .replaceAll("'",'&#39;');
+    }
+  </script></body>
+</html>
